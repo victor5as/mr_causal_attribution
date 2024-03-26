@@ -336,12 +336,14 @@ class ThetaC:
         regressor_args = a tuple of positional args for regressor.__init__.
         regressor_kwargs = a dictionary of keyword args for regressor.__init__.
         regressor_fit_kwargs = a dictionary of keyword args for regressor.fit.
-
+        is_pipeline_reg = True if regressor is a list of classes to be put into a Pipeline.
+        
         classifier = the classification estimator: a class supporting .fit and .predict_proba methods.
         classifier_args = a tuple of positional args for classifier.__init__.
         classifier_kwargs = a dictionary of keyword args for classifier.__init__.
         classifier_fit_kwargs = a dictionary of keyword args for classifier.fit.
-
+        is_pipeline_cla = True if classifier is a list of classes to be put into a Pipeline.
+        
         calibrator = Optional, a method for probability calibration on a calibration set.
                      This could be a regressor (e.g. sklearn.isotonic.IsotonicRegression) or
                      a classifier (e.g. sklearn.LogisticRegression).
@@ -606,11 +608,13 @@ class ThetaC:
         regressor_args = a tuple of positional args for regressor.__init__.
         regressor_kwargs = a dictionary of keyword args for regressor.__init__.
         regressor_fit_kwargs = a dictionary of keyword args for regressor.fit.
-
+        is_pipeline_reg = True if regressor is a list of classes to be put into a Pipeline.
+        
         classifier = the classification estimator: a class supporting .fit and .predict_proba methods.
         classifier_args = a tuple of positional args for classifier.__init__.
         classifier_kwargs = a dictionary of keyword args for classifier.__init__.
         classifier_fit_kwargs = a dictionary of keyword args for classifier.fit.
+        is_pipeline_cla = True if classifier is a list of classes to be put into a Pipeline.
 
         calibrator = Optional, a method for probability calibration on a calibration set.
                      This could be a regressor (e.g. sklearn.isotonic.IsotonicRegression) or
