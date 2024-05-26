@@ -1,7 +1,8 @@
 """
-This module implements the estimators for causal change attribution in the following paper:
-Multiply-Robust Causal Change Attribution (2024)
-Anonymous Authours
+Source code for the following paper:
+Quintas-Martínez, V., Bahadori, M. T., Santiago, E., Mu, J. and Heckerman, D. 
+"Multiply-Robust Causal Change Attribution" 
+Proceedings of the 41st International Conference on Machine Learning, Vienna, Austria. PMLR 235, 2024.
 """
 
 import warnings

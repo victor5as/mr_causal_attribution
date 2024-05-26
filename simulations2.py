@@ -1,7 +1,8 @@
 """
-This code implements additional simulations for the following paper:
-Multiply-Robust Causal Change Attribution (2024)
-Anonymous Authours
+This code implements simulations for the following paper:
+Quintas-Martínez, V., Bahadori, M. T., Santiago, E., Mu, J. and Heckerman, D. 
+"Multiply-Robust Causal Change Attribution" 
+Proceedings of the 41st International Conference on Machine Learning, Vienna, Austria. PMLR 235, 2024.
 """
 
 import numpy as np

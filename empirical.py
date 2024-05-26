@@ -1,7 +1,8 @@
 """
-This module replicates the empirical application in the following paper:
-Multiply-Robust Causal Change Attribution (2024)
-Anonymous Authours
+Empirical application for the following paper:
+Quintas-Martínez, V., Bahadori, M. T., Santiago, E., Mu, J. and Heckerman, D. 
+"Multiply-Robust Causal Change Attribution" 
+Proceedings of the 41st International Conference on Machine Learning, Vienna, Austria. PMLR 235, 2024.
 """
 
 import pandas as pd
@@ -11,9 +12,9 @@ from statsmodels.stats.weightstats import DescrStatsW
 from scipy.stats import norm
 from math import comb
 from mr_attribution import ThetaC
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import StratifiedKFold, train_test_split
 from sklearn.isotonic import IsotonicRegression
-from lightgbm import  LGBMClassifier, LGBMRegressor
+from sklearn.ensemble import  HistGradientBoostingClassifier, HistGradientBoostingRegressor
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import pathlib
@@ -32,21 +33,28 @@ df[['education', 'occupation']] = df[['education', 'occupation']].astype('catego
 
 # Hyperparameters:
 kwargs = {
-    'regressor' : LGBMRegressor, 
-    'regressor_kwargs' : {'random_state' : 0, 'n_jobs' : -1},
-    'classifier' : LGBMClassifier,
-    'classifier_kwargs' : {'random_state' : 0, 'n_jobs' : -1, 'is_unbalance' : True},
+    'regressor' : HistGradientBoostingRegressor, 
+    'regressor_kwargs' : {'random_state' : 0},
+    'classifier' : HistGradientBoostingClassifier,
+    'classifier_kwargs' : {'random_state' : 0},
     'calibrator' : IsotonicRegression,
     'calibrator_kwargs' : {'out_of_bounds' : 'clip'},
 }
 
-# Split data:
+# Split data into train and test set:
 X = df[['education', 'occupation']].values
 y = df['wage'].values
 T = df['female'].values
 w = df['weight'].values
-X_train, X_eval, y_train, y_eval, T_train, T_eval, w_train, w_eval = train_test_split(X, y, T, w, train_size = 0.5, stratify = T, random_state = 0)
-X_calib, X_train, _, y_train, T_calib, T_train, w_calib, w_train = train_test_split(X_train, y_train, T_train, w_train, train_size = 0.2, stratify = T_train, random_state = 0)
+
+kf = StratifiedKFold(n_splits = 2, shuffle = True, random_state = 0)
+train_index, test_index = next(kf.split(X, T))
+
+X_train, X_eval, y_train, y_eval, T_train, T_eval = X[train_index], X[test_index], y[train_index], y[test_index], T[train_index], T[test_index]
+w_train, w_eval = w[train_index], w[test_index]
+
+X_calib, X_train, _, y_train, T_calib, T_train, w_calib, w_train = train_test_split(X_train, y_train, T_train, w_train, 
+                                                                                    train_size = 0.2, stratify = T_train, random_state = 0)
 
 # Estimate scores
 all_combos = [list(i) for i in itertools.product([0, 1], repeat=3)]
@@ -135,26 +143,30 @@ for i in range(3):
 plt.yticks([5.0] + [3+0.5-i for i in range(3)], [f'Unconditional Wage Gap: {wagegap:.2f}*** ({wagegap_se:.2f})'] + 
            ["{}: {:.2f}{} ({:.2f})".format(nam[i], shap[i], stars[i], shap_se[i]) for i in range(3)])
 plt.xlabel('Gender Wage Gap ($/hour)')
-fig.set_figwidth(4)
-plt.savefig('results/shapley_narrow.pdf', bbox_inches='tight')
+plt.savefig('results/shapley.pdf', bbox_inches='tight')
 
 # Additional descriptive plots for Appendix:
 w0, w1 = w_eval[T_eval==0], w_eval[T_eval==1]
+
 data_male_eval = pd.DataFrame({'education' : X_eval[:,0][T_eval==0], 
                               'occupation' : X_eval[:,1][T_eval==0],
                               'wage' : y_eval[T_eval==0]})
 data_female_eval = pd.DataFrame({'education' : X_eval[:,0][T_eval==1], 
                               'occupation' : X_eval[:,1][T_eval==1],
                               'wage' : y_eval[T_eval==1]})
+
 educ_names = {0 : 'Less than HS', 1 : 'HS Graduate', 2 : 'Some College', 3 : 'College Graduate', 4 : 'Advanced Degree'}
-data_male_eval['education'].replace(educ_names, inplace=True)
-data_female_eval['education'].replace(educ_names, inplace=True)
+data_male_eval['education'] = data_male_eval['education'].replace(educ_names)
+data_female_eval['education'] = data_female_eval['education'].replace(educ_names)
+
 cats_educ = [educ_names[i] for i in range(5)]
+
 ind = np.arange(len(cats_educ))
 share0, share1 = np.zeros(len(cats_educ)), np.zeros(len(cats_educ))
 for i, c in enumerate(cats_educ):
     share0[i] = np.sum(w0*(data_male_eval['education'] == c))/np.sum(w0)*100
     share1[i] = np.sum(w1*(data_female_eval['education'] == c))/np.sum(w1)*100
+
 fig = plt.figure()
 fig.set_size_inches(6, 5)
 plt.bar(ind, share0, 0.4, label='Male')
@@ -170,9 +182,11 @@ occup_names= {1 : 'Management', 2 : 'Business/Finance', 3 : 'Computer/Math', 4 :
               11 : 'Healthcare Support', 12 : 'Protective Services', 13 : 'Food Preparation/Serving', 14 : 'Building Cleaning/Maintenance', 
               15 : 'Personal Care', 16 : 'Sales', 17 : 'Administrative', 18: 'Farming/Fishing/Forestry', 19 : 'Construction/Mining', 
               20 : 'Installation/Repairs', 21 : 'Production', 22 : 'Transportation'}
-data_male_eval['occupation'].replace(occup_names, inplace=True)
-data_female_eval['occupation'].replace(occup_names, inplace=True)
+data_male_eval['occupation'] = data_male_eval['occupation'].replace(occup_names)
+data_female_eval['occupation'] = data_female_eval['occupation'].replace(occup_names)
+
 cats_occu = ['Management', 'Sales', 'Administrative', 'Education', 'Healthcare Practitioner', 'Other']
+
 ind = np.arange(len(cats_occu))
 share0, share1 = np.zeros(len(cats_occu)), np.zeros(len(cats_occu))
 for i, c in enumerate(cats_occu[:-1]):
