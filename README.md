@@ -1,6 +1,9 @@
 # Multiply-Robust Causal Change Attribution
 
-Replication files for *Multiply-Robust Causal Change Attribution* (2024).
+Replication files for 
+> Quintas-Martínez, V., Bahadori, M. T., Santiago, E., Mu, J. and Heckerman, D.
+> "Multiply-Robust Causal Change Attribution"
+> *Proceedings of the 41st International Conference on Machine Learning*, Vienna, Austria. PMLR 235, 2024.
 
 File contents:
 - ```simulations1.py``` runs the first set of simulations reported in the paper.
